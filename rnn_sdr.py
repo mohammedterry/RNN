@@ -68,9 +68,17 @@ class RNN:
             
             hidden_delta_future = hidden_delta
     
-    def dump_to_disk(self):
-        "store trained weights & memory of network to file"
-        pass
+    def save(self, file_name = 'rnn_config.npy'):
+        np.save(file_name, {'memory':self.memory, 'deltas': self.deltas, 'l0_weights':self.l0.weights, 'l1_weights':self.l1.weights, 'l2_weights':self.l2.weights}) 
+
+    def load(self, file_name = 'rnn_config.npy'):
+        config = np.load(file_name).item()
+        self.memory = config['memory']
+        self.deltas = config['deltas']
+        self.l0.weights = config['l0_weights']
+        self.l1.weights = config['l1_weights']
+        self.l2.weights = config['l2_weights']
+        self.error = 0.0
 
     def init_memory(self):
         self.error = 0.0
@@ -82,8 +90,9 @@ class RNN:
         self.l1.updates *= 0
         self.l0.updates *= 0
 
-    def train(self, training_inputs, training_outputs, errorThresh = 0.01, alpha = 0.1, iterations = 10000, log_rate = 1000):
-        for i in range(iterations): #or self.error < errorThresh
+    def train(self, training_inputs, training_outputs, errThresh = 0.01, alpha = 0.1, iterations = 10000, log_rate = 1000):
+        print('network being trained')
+        for i in range(iterations): 
             
             self.init_memory()
             p = self.forward(training_inputs[i],training_outputs[i])
@@ -99,7 +108,13 @@ class RNN:
                 print("Predicted:", str(p))
                 print("Error:", str(self.error))
                 print("------------")
-        self.dump_to_disk()
+                self.save()
+
+            if self.error < errThresh:
+                print('error is below threshold',self.error)
+                self.save()
+                return
+    
 
 
 int2binary = {}
@@ -115,4 +130,9 @@ for i in range(100000): #make a quick training set
     B.append(int2binary[b_int]) # binary encoding
 #-----TEST-------
 net = RNN([1,3,1], 8)
-net.train(A,B)
+#net.train(A,B)
+net.load()
+t = int(input('enter a number between 0 - 10,000:  >'))
+print("Input:", A[t])
+print("Expected:", B[t])
+print("Predicted:", net.forward(A[t], B[t]))
