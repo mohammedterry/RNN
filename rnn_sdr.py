@@ -34,10 +34,9 @@ class RNN:
     def d_sigmoid(self, x): 
         return x*(1-x) #convert output of sigmoid function to it derivative
     
-    def predict(self, i, remember = False):
+    def predict(self, i):
         hidden_value = self.sigmoid( self.l0.f(i) + self.l1.f(self.memory[-1]) )
-        if remember:    
-            self.memory.append(copy.deepcopy(hidden_value))
+        self.memory.append(copy.deepcopy(hidden_value))
         return self.sigmoid( self.l2.f(hidden_value) )
 
     def forward(self, i, o):
@@ -45,7 +44,7 @@ class RNN:
         for n in range(self.seq_length): #going through binary 
             input_bits = np.array([[i[self.seq_length - n - 1]]])
             output_bits = np.array([[o[self.seq_length - n - 1]]]).T
-            p = self.predict(input_bits, remember = True)
+            p = self.predict(input_bits)
             e = output_bits - p  #error
             self.deltas.append( e * self.d_sigmoid( p ) )
             self.error += np.abs(e[0])
