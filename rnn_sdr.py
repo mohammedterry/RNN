@@ -48,7 +48,7 @@ class RNN:
             e = output_bits - p  #error
             self.deltas.append( e * self.d_sigmoid( p ) )
             self.error += np.abs(e[0])
-            prediction[self.seq_length - n - 1] = int(np.round(p))
+            prediction[self.seq_length - n - 1] = p #int(np.round(p))
         return prediction
     
     def backward(self,i):
