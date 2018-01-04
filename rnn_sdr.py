@@ -41,9 +41,9 @@ class RNN:
 
     def forward(self, i, o):
         prediction = np.zeros_like(i)
-        for n in range(self.seq_length): #going through binary 
-            input_bits = np.array([[i[self.seq_length - n - 1]]])
-            output_bits = np.array([[o[self.seq_length - n - 1]]]).T
+        for n in range(self.seq_length): #going through binary              #adapt for multiple inputs/outputs
+            input_bits = np.array([[i[self.seq_length - n - 1]]])           #X = np.array([[a[binary_dim - position - 1],b[binary_dim - position - 1]]])
+            output_bits = np.array([[o[self.seq_length - n - 1]]]).T        #y = np.array([[c[binary_dim - position - 1]]]).T
             p = self.predict(input_bits)
             e = output_bits - p  #error
             self.deltas.append( e * self.d_sigmoid( p ) )
@@ -88,9 +88,11 @@ class RNN:
         self.l1.updates *= 0
         self.l0.updates *= 0
 
-    def train(self, training_inputs, training_outputs, errThresh = 0.01, alpha = 0.1, iterations = 10000, log_rate = 1000):
+    def train(self, training_inputs, training_outputs, errThresh = 0.01, alpha = 0.001, dynamic = True, iterations = 10000, log_rate = 1000):
         for i in range(iterations): 
             
+            if dynamic: alpha = 1/(1+.005*i)
+
             self.init_memory()
             p = self.forward(training_inputs[i],training_outputs[i])
             self.backward(training_inputs[i])
@@ -100,6 +102,7 @@ class RNN:
             self.l2.adjust(alpha)
 
             if(i % log_rate == 0):
+                print("Alpha:", alpha)
                 print("Input:", str(training_inputs[i]))
                 print("Expected:", str(training_outputs[i]))
                 print("Predicted:", str(p))
@@ -128,7 +131,7 @@ for i in range(100000): #make a quick training set
     b_int = a_int *2
     B.append(int2binary[b_int]) # binary encoding
 
-net = RNN([1,3,1], 8)
+net = RNN([1,3,1], 8)  #recommended: if sdr length = 300: [300, 512, 512, 300]
 #net.train(A,B)
 net.load()
 t = int(input('enter a number between 0 - 10,000:  >'))
